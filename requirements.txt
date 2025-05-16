@@ -1,0 +1,8 @@
+# For CounterFit simulator connection
+counterfit-connection
+counterfit-shims-grove
+counterfit-shims-seeed-python-dht
+
+# MQTT clients
+paho-mqtt==1.6.1
+adafruit-io
