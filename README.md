@@ -1,1 +1,1 @@
-# Iot-smartdevices
+# Iot and Smart Devices Course
