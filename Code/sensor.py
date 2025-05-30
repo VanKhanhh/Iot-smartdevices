@@ -18,24 +18,26 @@ while True:
     humid, temp = dht_sensor.read()
     print(f"Humidity: {humid}, Temperature: {temp}")
 
-    if relay_mqtt_state == "AUTO":
-        if humid < 80:
-            print("AUTO mode: Humidity low — Turn ON relay")
-            relay.on()
-            current_relay_state = "ON"
-        else:
-            print("AUTO mode: Humidity OK — Turn OFF relay")
-            relay.off()
-            current_relay_state = "OFF"
-    else:
-        if relay_mqtt_state == "ON":
-            print("MANUAL mode: Turn ON relay (by dashboard)")
-            relay.on()
-            current_relay_state = "ON"
-        else:
-            print("MANUAL mode: Turn OFF relay (by dashboard)")
-            relay.off()
-            current_relay_state = "OFF"
+    # if relay_mqtt_state == "OFF":
+    #     if humid < 80:
+    #         print("Humidity low — Turn ON relay")
+    #         relay.on()
+    #         current_relay_state = "ON"
+    #     else:
+    #         print("Humidity OK")
+    #         if relay_mqtt_state == "ON":
+    #             relay.off()
+    #             current_relay_state = "OFF"
+
+    if humid < 80 :
+        print("Soil moisture is low - Turn on the relay")
+        relay.on()
+        current_relay_state = "ON"
+    else : 
+        print("Soil moisture is OK - Turn off the relay")
+        relay.off()
+        current_relay_state = "OFF"
+
 
     aio_client.publish(LIGHT_FEED, light)
     aio_client.publish(TEMP_FEED, temp)
