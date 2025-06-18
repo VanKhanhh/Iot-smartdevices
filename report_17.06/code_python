@@ -2,21 +2,21 @@ import serial
 import time
 from Adafruit_IO import Client
 
-# Adafruit IO information
-AIO_USERNAME = "your_username"
-AIO_KEY = "your_aio_key"
+# Adafruit data
+AIO_USERNAME = "vankhanhhh"
+AIO_KEY = ""  #input key
 aio = Client(AIO_USERNAME, AIO_KEY)
 
-# Read Arduino data
+# Serial port of Arduino
 ser = serial.Serial('COM4', 9600) 
 
 while True:
     try:
         if ser.in_waiting:
             line = ser.readline().decode().strip()
-            print(f"Độ ẩm đọc được: {line}")
-            aio.send('soil-moisture', int(line))  # gửi lên feed 'moisture'
+            print(f"Soil moisture: {line}")
+            aio.send('soil-moisture', int(line))
         time.sleep(5)
     except Exception as e:
-        print("Lỗi:", e)
-        time.sleep(5)
+        print("Error:", e)
+        time.sleep(1)
