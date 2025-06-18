@@ -1,0 +1,13 @@
+const int soilPin = A0;  
+
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  int value = analogRead(soilPin); 
+  
+  Serial.println(value);
+
+  delay(1000); 
+}
