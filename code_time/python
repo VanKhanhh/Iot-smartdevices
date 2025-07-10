@@ -1,44 +1,51 @@
 import serial
 import time
-from datetime import datetime
 from Adafruit_IO import Client
+import joblib
+import numpy as np
 
-# Adafruit IO config
+# Adafruit IO ìno
 AIO_USERNAME = "vankhanhhh"
-AIO_KEY = "your_key_here"
+AIO_KEY = "YOUR_ADAFRUIT_IO_KEY"  
 aio = Client(AIO_USERNAME, AIO_KEY)
 
-# Arduino Serial
-ser = serial.Serial('COM4', 9600)
+# Connect Arduino
+ser = serial.Serial('COM4', 9600)  
 
-# Gửi ON lệnh bơm nếu chưa gửi trong giờ hiện tại
-last_pump_hour = None
+# Load ML model
+try:
+    model = joblib.load('moisture_predictor.pkl')
+    print("ML model loaded.")
+except:
+    model = None
+    print("Cannot find ML model. Run manually")
 
 while True:
     try:
         if ser.in_waiting:
             line = ser.readline().decode().strip()
-            now = datetime.now()
-            timestamp = now.strftime('%Y-%m-%d %H:%M:%S')
+            if not line.isdigit():
+                continue  
 
-            if line.isdigit():
-                moisture = int(line)
-                print(f"[{timestamp}] Soil moisture: {moisture}")
+            moisture = int(line)
+            print(f"Curent soil moisture: {moisture}%")
 
-                aio.send('soil-moisture', moisture)
+            # Send to Adafruit IO
+            aio.send('soil-moisture', moisture)
 
-                # Kiểm tra nếu cần bơm
-                current_hour = now.hour
-                if current_hour % 3 == 0 and last_pump_hour != current_hour:
-                    if moisture == 1:  # 1 = khô = < 95%
-                        print("Send command ON")
-                        ser.write(b'ON\n')
-                        last_pump_hour = current_hour
-                    else:
-                        print("Soil-moisture is ok")
+            # Turn on relay if soil moisture < 95%
+            relay_state = "ON" if moisture < 95 else "OFF"
+            aio.send('relay', relay_state)
+            print(f"Relay: {relay_state}")
 
-        time.sleep(2)
+            # Predict
+            if model:
+                prediction = model.predict(np.array([[moisture]]))
+                predicted_value = round(prediction[0], 2)
+                print(f"Predict next soil-moisture value: {predicted_value}%")
+                aio.send('predicted-moisture', predicted_value)
 
+        time.sleep(5)
     except Exception as e:
         print("Error:", e)
         time.sleep(2)
