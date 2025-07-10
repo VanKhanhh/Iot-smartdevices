@@ -1,0 +1,44 @@
+import serial
+import time
+from datetime import datetime
+from Adafruit_IO import Client
+
+# Adafruit IO config
+AIO_USERNAME = "vankhanhhh"
+AIO_KEY = "your_key_here"
+aio = Client(AIO_USERNAME, AIO_KEY)
+
+# Arduino Serial
+ser = serial.Serial('COM4', 9600)
+
+# Gửi ON lệnh bơm nếu chưa gửi trong giờ hiện tại
+last_pump_hour = None
+
+while True:
+    try:
+        if ser.in_waiting:
+            line = ser.readline().decode().strip()
+            now = datetime.now()
+            timestamp = now.strftime('%Y-%m-%d %H:%M:%S')
+
+            if line.isdigit():
+                moisture = int(line)
+                print(f"[{timestamp}] Soil moisture: {moisture}")
+
+                aio.send('soil-moisture', moisture)
+
+                # Kiểm tra nếu cần bơm
+                current_hour = now.hour
+                if current_hour % 3 == 0 and last_pump_hour != current_hour:
+                    if moisture == 1:  # 1 = khô = < 95%
+                        print("Send command ON")
+                        ser.write(b'ON\n')
+                        last_pump_hour = current_hour
+                    else:
+                        print("Soil-moisture is ok")
+
+        time.sleep(2)
+
+    except Exception as e:
+        print("Error:", e)
+        time.sleep(2)
