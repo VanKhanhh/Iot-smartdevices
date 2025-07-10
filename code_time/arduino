@@ -1,0 +1,30 @@
+int relayPin = 3;
+String inputString = "";
+
+void setup() {
+  pinMode(relayPin, OUTPUT);
+  digitalWrite(relayPin, HIGH); // relay OFF (LOW = ON)
+  Serial.begin(9600);
+}
+
+void loop() {
+  int water = digitalRead(6); // 0 = wet, 1 = dry
+  Serial.println(water);      // gửi về Python
+  delay(1000);
+
+  // Nhận lệnh từ Python
+  while (Serial.available()) {
+    char c = Serial.read();
+    if (c == '\n') {
+      inputString.trim();
+      if (inputString == "ON") {
+        digitalWrite(relayPin, LOW); // bật bơm
+        delay(30000);                // chạy 30 giây
+        digitalWrite(relayPin, HIGH); // tắt bơm
+      }
+      inputString = "";
+    } else {
+      inputString += c;
+    }
+  }
+}
