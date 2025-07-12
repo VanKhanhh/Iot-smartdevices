@@ -1,14 +1,60 @@
+# ================== 1. INSTALL LIBRARIES (Colab only) ==================
+# !pip install pandas scikit-learn joblib matplotlib
+
+# ================== 2. IMPORT & LOAD DATA ==============================
 import pandas as pd
 from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
 import joblib
+import matplotlib.pyplot as plt
 
-df = pd.read_csv("moisture_data.csv") 
+CSV_PATH = 'moisture_data.csv'        
 
-X = df[['current']]
-y = df['next']
+# Read only the timestamp and value columns
+df = pd.read_csv(CSV_PATH, usecols=['created_at', 'value'])
+
+# Parse data types
+df['created_at'] = pd.to_datetime(df['created_at'])
+df['value'] = pd.to_numeric(df['value'], errors='coerce')
+df.dropna(inplace=True)
+
+# Ensure time order
+df.sort_values('created_at', inplace=True)
+df.reset_index(drop=True, inplace=True)
+
+# ================== 3. CREATE LAG FEATURES (N previous values) =========
+N_LAGS = 3            # use the 3 most‑recent readings to predict the next one
+for i in range(1, N_LAGS + 1):
+    df[f'lag_{i}'] = df['value'].shift(i)
+
+df.dropna(inplace=True)   # remove first N_LAGS rows with NaNs
+
+X = df[[f'lag_{i}' for i in range(N_LAGS, 0, -1)]]
+y = df['value']           # the target is the next reading
+
+# ================== 4. TRAIN / TEST SPLIT & MODEL TRAINING =============
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
 model = LinearRegression()
-model.fit(X, y)
+model.fit(X_train, y_train)
+print(f"R² on test set: {model.score(X_test, y_test):.3f}")
 
+# ================== 5. SAVE THE MODEL ==================================
 joblib.dump(model, 'moisture_predictor.pkl')
-print("Trained model ML.")
+print("Model saved as moisture_predictor.pkl")
+
+# ================== 6. QUICK DEMO PREDICTION & PLOT ====================
+latest_values = df['value'].tail(N_LAGS).values[::-1]  # [lag3, lag2, lag1]
+predicted_next = model.predict([latest_values])[0]
+print(f"Last {N_LAGS} readings: {latest_values}  ->  Predicted next: {predicted_next:.2f}")
+
+# Optional visualization
+plt.figure(figsize=(10,4))
+plt.plot(df['created_at'], df['value'], label='Soil moisture (%)')
+plt.xlabel('Time'); plt.ylabel('Moisture value')
+plt.title('Soil Moisture Time‑series')
+plt.grid(); plt.legend(); plt.tight_layout()
+plt.show()
+
