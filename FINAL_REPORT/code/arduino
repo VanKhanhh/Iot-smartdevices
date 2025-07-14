@@ -1,0 +1,19 @@
+void setup() {
+  Serial.begin(9600);       
+  pinMode(A0, INPUT);       
+  pinMode(3, OUTPUT);       
+}
+
+void loop() {
+  int rawValue = analogRead(A0);
+  int moisturePercent = map(rawValue, 1023, 0, 0, 100);
+  Serial.println(moisturePercent);
+
+  if (moisturePercent < 60) {
+    digitalWrite(3, LOW);   
+  } else {
+    digitalWrite(3, HIGH);  
+  }
+
+  delay(5000);
+} 
