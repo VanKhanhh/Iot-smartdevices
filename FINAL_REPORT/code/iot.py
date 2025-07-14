@@ -5,7 +5,7 @@ import joblib
 import numpy as np
 import pandas as pd
 
-# Adafruit IO credentials
+# Adafruit IO data
 AIO_USERNAME = "vanphann"
 AIO_KEY = ""
 aio = Client(AIO_USERNAME, AIO_KEY)
@@ -29,7 +29,7 @@ while True:
         if ser.in_waiting:
             line = ser.readline().decode().strip()
             if not line.isdigit():
-                continue  # Skip invalid lines
+                continue  
 
             moisture = int(line)
             print(f"Current soil moisture: {moisture}%")
